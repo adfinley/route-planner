@@ -103,12 +103,11 @@ body:not(.sv) #pgS,body.sv #pgM{visibility:hidden;transition:visibility 0s linea
 #pgS h2{font-weight:600;font-size:16px}
 .sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .sb{display:block;width:100%;border:0;background:none;padding:0;cursor:pointer;color:var(--mute);font-size:12px;line-height:15px;text-align:center}
-.sb i{display:block;width:100%;border-radius:8px;background:var(--bg2) center/cover;border:1px solid #bebebe;box-shadow:0 1px 4px rgba(12,12,13,.05);margin-bottom:4px;transition:border-color .15s,box-shadow .15s,transform .15s}
+.sb i{display:block;box-sizing:border-box;width:100%;height:var(--tw,87px);border-radius:8px;background:var(--bg2) center/cover;border:1px solid #bebebe;box-shadow:0 1px 4px rgba(12,12,13,.05);margin-bottom:4px;transition:border-color .15s,box-shadow .15s,transform .15s}
 .sb:hover i{border-color:var(--mute);box-shadow:0 3px 10px rgba(0,0,0,.2);transform:translateY(-2px)}
 .sb:hover span{color:var(--ink)}
 .sb.sel{color:var(--accT);font-weight:600}.sb.sel i{border:2px solid var(--acc)}.sb.sel:hover i{border-color:var(--acc)}
 .sb:focus-visible i{outline:2px solid var(--acc);outline-offset:2px}
-.sb i::before{content:"";display:block;padding-top:100%}
 .sb i.ld{position:relative}
 .uni{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:5px}
 .uni:hover{color:var(--accT);text-decoration:none}
@@ -214,12 +213,11 @@ body.ne #elev{height:0}
   <div class="pg" id="pgS">
    <div class="hd"><button class="lnk" id="bBack" type="button" style="font-size:14px;padding:0">‹ Back</button><button class="lnk xc" type="button" style="font-size:14px;padding:0">Close</button></div>
    <h1 style="padding:0 24px">Saved Routes</h1>
-   <section class="sec"><h2>My Routes</h2><div class="gr" id="gMine"></div></section>
+   <section class="sec"><h2>My Routes</h2><div class="gr" id="gMine"></div><div class="cp" style="gap:16px;margin-top:8px"><button class="lnk" id="bBak" type="button">Back up routes</button><button class="lnk" id="bRst" type="button">Restore from backup</button></div></section>
    <hr class="dash mg">
    <section class="sec"><h2>Race Routes</h2><div class="gr" id="gRace"></div></section>
    <hr class="dash mg">
    <section class="sec"><h2>World Majors</h2><div class="gr" id="gMaj"></div></section>
-   <section class="sec"><div class="cp" style="gap:16px"><button class="lnk" id="bBak" type="button">Back up routes</button><button class="lnk" id="bRst" type="button">Restore from backup</button></div></section>
   </div>
   </div>
  </aside>
@@ -758,7 +756,9 @@ function renderStyles(){
   b.type='button';b.className='sb'+(id===S.style?' sel':'');b.setAttribute('aria-pressed',id===S.style);
   if(thumbs[id])i.style.backgroundImage=`url(${thumbs[id]})`;else if(!tFail.has(id))i.classList.add('ld'); // spinner until the tile is ready
   t.textContent=pretty(id);b.append(i,t);b.onclick=()=>setStyle(id);g.appendChild(b)});
+ sizeTiles();if(!g._ro){g._ro=new ResizeObserver(sizeTiles);g._ro.observe(g)}
 }
+function sizeTiles(){const g=$('styleGrid'),w=(g.clientWidth-24)/4;if(w>10)g.style.setProperty('--tw',w+'px')} // 4 columns, 8px gaps: tile height = tile width
 async function genThumbs(){
  if(thumbBusy)return;thumbBusy=true;tFail.clear();renderStyles();
  for(const id of S.styles.slice()){if(thumbs[id])continue;
