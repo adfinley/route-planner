@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Route Planner</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Inter:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
@@ -160,6 +160,24 @@ body.ne #elev{height:0}
 
  #stats{gap:24px;padding:16px}
  #elev,#cv{height:170px}
+
+ /* safe areas (notch / home bar) */
+ body{padding-top:env(safe-area-inset-top)}
+ #bottom{padding-bottom:env(safe-area-inset-bottom)}
+
+ /* panel: full width, bigger tap targets for the text links in the header */
+ .hd .xc{padding:12px 8px!important;margin:-12px -8px}
+ #bCloseMap{width:44px;height:44px;left:12px;top:12px}
+
+ /* icon toolbar: full-width bar, 48px touch targets, 24px icons, no hover tooltips */
+ #bar{left:12px;right:12px;bottom:12px;height:56px;padding:0 6px;justify-content:space-between;border-radius:28px;box-shadow:0 2px 12px rgba(12,12,13,.14)}
+ #bar button{flex:1 1 0;min-width:44px;max-width:60px;height:48px;border-radius:24px;-webkit-tap-highlight-color:transparent}
+ #bar button::after{display:none}
+ #bar svg{width:24px;height:24px}
+ #bar button:not(:disabled):active{background:var(--hover)}
+
+ /* keep the map attribution clear of the bar */
+ .maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{bottom:68px}
 }
 </style>
 </head>
@@ -689,12 +707,12 @@ const routePts=r=>{let p=r.segs.flat();if(r.ob&&p.length>1)p=p.concat(p.slice(0,
 const nat=(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'});
 function list(){
  const a=store(),G={mine:[],race:[],major:[]};
- const items=a.map(r=>({r,name:r.name||'Untitled route',key:'u'+r.id+':'+Math.round(r.dist||0)+':'+r.w.length,dist:r.dist,up:r.up,pts:r.segs.flat(),cur:S.id===r.id,open:()=>load(r),
+ const items=a.map(r=>({r,name:r.name||'Untitled route',key:'u'+r.id+':'+Math.round(r.dist||0)+':'+r.w.length,dist:r.dist,up:r.up,pts:r.segs.flat(),cur:S.id===r.id,open:()=>{load(r);mobileClose()},
   dl:()=>saveGpx(r.name,routePts(r).map(p=>trkpt(p,null))),
   del:()=>{put(store().filter(x=>x.id!==r.id));if(S.id===r.id)S.id=null;list();toast('Saved route removed.')}})); // leaves the route on the map
  items.forEach(it=>(it.r.tag==='race'?G.race:G.mine).push(it));
  LIB.forEach(l=>(l.cat==='major'?G.major:l.cat==='race'?G.race:G.mine).push({name:l.name,key:'l'+l.file,dist:l.dist,pts:l.pts,
-  open:()=>{importPts(l.pts,l.name);list()},
+  open:()=>{importPts(l.pts,l.name);list();mobileClose()},
   dl:()=>{const x=document.createElement('a');x.href='saved/'+encodeURIComponent(l.file);x.download=l.file;document.body.appendChild(x);x.click();x.remove()}}));
  const fill=(id,arr,em)=>{const box=$(id);box.textContent='';
   if(!arr.length){const d=document.createElement('div');d.className='mute';d.style.gridColumn='1/-1';d.textContent=em;box.appendChild(d)}
@@ -755,7 +773,7 @@ function renderStyles(){
  S.styles.forEach(id=>{const b=document.createElement('button'),i=document.createElement('i'),t=document.createElement('span');
   b.type='button';b.className='sb'+(id===S.style?' sel':'');b.setAttribute('aria-pressed',id===S.style);
   if(thumbs[id])i.style.backgroundImage=`url(${thumbs[id]})`;else if(!tFail.has(id))i.classList.add('ld'); // spinner until the tile is ready
-  t.textContent=pretty(id);b.append(i,t);b.onclick=()=>setStyle(id);g.appendChild(b)});
+  t.textContent=pretty(id);b.append(i,t);b.onclick=()=>{setStyle(id);if(CLOSE_MENU_ON_STYLE)mobileClose()};g.appendChild(b)});
  sizeTiles();if(!g._ro){g._ro=new ResizeObserver(sizeTiles);g._ro.observe(g)}
 }
 function sizeTiles(){const g=$('styleGrid'),w=(g.clientWidth-24)/4;if(w>10)g.style.setProperty('--tw',w+'px')} // 4 columns, 8px gaps: tile height = tile width
@@ -801,6 +819,9 @@ $('tMan').onclick=()=>setManual(S.snap);
 $('title').addEventListener('input',updateSaveBtn);
 $('bEl').onclick=()=>{document.body.classList.toggle('ne');$('bEl').classList.toggle('on',!document.body.classList.contains('ne'));setTimeout(drawChart,50)};
 function closeMenu(){document.body.classList.remove('menu');$('bMenu').classList.remove('on')}
+const MOBILE=matchMedia('(max-width:760px)');
+const CLOSE_MENU_ON_STYLE=true; // set false to keep the menu open after picking a map style on phones
+function mobileClose(){if(MOBILE.matches)closeMenu()} // on phones the menu covers the map, so close it once something loads
 $('bMenu').onclick=()=>{const o=!document.body.classList.contains('menu');if(o)document.body.classList.remove('sv');document.body.classList.toggle('menu',o);$('bMenu').classList.toggle('on',o);if(o){genThumbs();list()}chkScroll()};
 document.querySelectorAll('.xc').forEach(b=>b.onclick=closeMenu);
 $('mapbox').addEventListener('transitionend',e=>{if(e.target.id==='mapbox')map.resize()});
